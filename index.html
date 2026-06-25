@@ -96,12 +96,15 @@
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       grid-template-rows: repeat(3, 1fr);
-      gap: 8px;
+      gap: 10px;
+      background: #4a7fb5;
+      border-radius: 16px;
+      padding: 10px;
     }
 
     .cell {
-      background: #16213e;
-      border-radius: 12px;
+      background: #0d1b3e;
+      border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -111,10 +114,10 @@
       transition: background 0.15s;
     }
 
-    .cell:hover:not(.x):not(.o) { background: #1e2d50; }
+    .cell:hover:not(.x):not(.o) { background: #162848; }
     .cell.x { color: #e94560; }
     .cell.o { color: #a8dadc; }
-    .cell.win { background: #0f3460; }
+    .cell.win { background: #1a4080; }
 
     .buttons {
       display: flex;
