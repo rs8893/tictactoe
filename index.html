@@ -80,18 +80,18 @@
 </head>
 <body>
   <h1>Tic Tac Toe</h1>
-  <div id="status">Player X's turn</div>
+  <div id="status">Your turn (X)</div>
   <div id="board"></div>
   <button id="reset">New Game</button>
   <div id="score">
-    <div class="score-item xs">X <span id="x-wins">0</span></div>
+    <div class="score-item xs">You (X) <span id="x-wins">0</span></div>
     <div class="score-item ds">Draws <span id="draws">0</span></div>
-    <div class="score-item os">O <span id="o-wins">0</span></div>
+    <div class="score-item os">AI (O) <span id="o-wins">0</span></div>
   </div>
 
   <script>
     var WINS = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-    var board, current, over, score = { X: 0, O: 0, D: 0 };
+    var board, current, over, aiThinking, score = { X: 0, O: 0, D: 0 };
     var boardEl = document.getElementById('board');
     var statusEl = document.getElementById('status');
 
@@ -107,7 +107,8 @@
       board = ['','','','','','','','',''];
       current = 'X';
       over = false;
-      statusEl.textContent = "Player X's turn";
+      aiThinking = false;
+      statusEl.textContent = 'Your turn (X)';
       boardEl.innerHTML = '';
       for (var i = 0; i < 9; i++) {
         var cell = document.createElement('div');
@@ -121,39 +122,89 @@
       }
     }
 
+    function placeMove(i, player) {
+      board[i] = player;
+      var cell = boardEl.children[i];
+      cell.textContent = player;
+      cell.classList.add(player.toLowerCase());
+    }
+
     function handleClick(e) {
       var i = parseInt(e.currentTarget.getAttribute('data-i'));
-      if (over || board[i]) return;
-      board[i] = current;
-      e.currentTarget.textContent = current;
-      e.currentTarget.classList.add(current.toLowerCase());
+      if (over || board[i] || aiThinking || current !== 'X') return;
+      placeMove(i, 'X');
 
-      var win = checkWin();
+      if (resolveState('X')) return;
+
+      current = 'O';
+      statusEl.textContent = 'AI is thinking...';
+      aiThinking = true;
+      setTimeout(aiMove, 300);
+    }
+
+    function aiMove() {
+      var best = minimax(board, 'O', 0);
+      placeMove(best.index, 'O');
+      aiThinking = false;
+      if (resolveState('O')) return;
+      current = 'X';
+      statusEl.textContent = 'Your turn (X)';
+    }
+
+    // Returns true if game ended after player's move
+    function resolveState(player) {
+      var win = checkWin(board);
       if (win) {
         for (var w = 0; w < win.length; w++) {
           boardEl.children[win[w]].classList.add('win');
         }
-        statusEl.textContent = 'Player ' + current + ' wins!';
-        score[current]++;
+        statusEl.textContent = player === 'X' ? 'You win!' : 'AI wins!';
+        score[player]++;
         updateScore();
         over = true;
+        return true;
       } else if (board.join('').length === 9) {
         statusEl.textContent = "It's a draw!";
         score.D++;
         updateScore();
         over = true;
-      } else {
-        current = current === 'X' ? 'O' : 'X';
-        statusEl.textContent = 'Player ' + current + "'s turn";
+        return true;
       }
+      return false;
     }
 
-    function checkWin() {
+    function checkWin(b) {
       for (var i = 0; i < WINS.length; i++) {
-        var a = WINS[i][0], b = WINS[i][1], c = WINS[i][2];
-        if (board[a] && board[a] === board[b] && board[b] === board[c]) return WINS[i];
+        var a = WINS[i][0], bx = WINS[i][1], c = WINS[i][2];
+        if (b[a] && b[a] === b[bx] && b[bx] === b[c]) return WINS[i];
       }
       return null;
+    }
+
+    function minimax(b, player, depth) {
+      var win = checkWin(b);
+      if (win) return { score: player === 'X' ? 10 - depth : depth - 10 };
+      var empty = [];
+      for (var i = 0; i < 9; i++) { if (!b[i]) empty.push(i); }
+      if (!empty.length) return { score: 0 };
+
+      var best = player === 'O'
+        ? { score: -Infinity }
+        : { score: Infinity };
+
+      for (var j = 0; j < empty.length; j++) {
+        var idx = empty[j];
+        b[idx] = player;
+        var result = minimax(b, player === 'O' ? 'X' : 'O', depth + 1);
+        b[idx] = '';
+        result.index = idx;
+        if (player === 'O') {
+          if (result.score > best.score) best = result;
+        } else {
+          if (result.score < best.score) best = result;
+        }
+      }
+      return best;
     }
 
     function updateScore() {
