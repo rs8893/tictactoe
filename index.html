@@ -14,74 +14,85 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 24px 16px;
-      min-height: 100vh;
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
+      padding: 10px 16px;
+      padding-bottom: max(10px, env(safe-area-inset-bottom));
     }
 
     h1 {
-      font-size: 2rem;
-      margin-bottom: 20px;
+      font-size: 1.5rem;
+      margin-bottom: 8px;
       color: #e94560;
+      flex-shrink: 0;
     }
 
-    /* Scoreboard */
     #scoreboard {
       display: flex;
       align-items: center;
-      gap: 12px;
-      margin-bottom: 20px;
+      gap: 8px;
+      margin-bottom: 8px;
       width: 100%;
-      max-width: 360px;
+      max-width: 380px;
+      flex-shrink: 0;
     }
 
     .score-card {
       flex: 1;
       background: #16213e;
-      border-radius: 12px;
-      padding: 12px 8px;
+      border-radius: 10px;
+      padding: 6px 4px;
       text-align: center;
     }
 
     .score-card .label {
-      font-size: 0.75rem;
+      font-size: 0.6rem;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
-      opacity: 0.7;
-      margin-bottom: 4px;
+      letter-spacing: 0.06em;
+      opacity: 0.6;
+      margin-bottom: 2px;
     }
 
     .score-card .name {
-      font-size: 1rem;
+      font-size: 0.8rem;
       font-weight: 600;
-      margin-bottom: 6px;
+      margin-bottom: 2px;
     }
 
     .score-card .number {
-      font-size: 2.2rem;
+      font-size: 1.8rem;
       font-weight: bold;
       line-height: 1;
     }
 
-    .score-card.you .name,
-    .score-card.you .number { color: #e94560; }
-    .score-card.ai  .name,
-    .score-card.ai  .number { color: #a8dadc; }
+    .score-card.you .name, .score-card.you .number { color: #e94560; }
+    .score-card.ai  .name, .score-card.ai  .number { color: #a8dadc; }
     .score-card.draws .number { color: #aaa; }
 
-    .score-divider {
-      font-size: 1.4rem;
-      color: #555;
-      flex-shrink: 0;
-    }
+    .score-divider { font-size: 1rem; color: #555; flex-shrink: 0; }
 
     #status {
-      font-size: 1.1rem;
-      margin-bottom: 20px;
+      font-size: 1rem;
+      margin-bottom: 8px;
       color: #a8dadc;
-      min-height: 1.4em;
+      flex-shrink: 0;
+      min-height: 1.3em;
+    }
+
+    #board-wrap {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      max-width: 380px;
     }
 
     #board {
+      width: 100%;
+      aspect-ratio: 1;
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       grid-template-rows: repeat(3, 1fr);
@@ -94,6 +105,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      font-size: min(13vw, 13vh);
       font-weight: bold;
       cursor: pointer;
       transition: background 0.15s;
@@ -107,12 +119,13 @@
     .buttons {
       display: flex;
       gap: 10px;
-      margin-top: 24px;
+      margin-top: 10px;
+      flex-shrink: 0;
     }
 
     button {
-      padding: 12px 24px;
-      font-size: 0.95rem;
+      padding: 10px 20px;
+      font-size: 0.9rem;
       border: none;
       border-radius: 8px;
       cursor: pointer;
@@ -146,7 +159,10 @@
   </div>
 
   <div id="status">Your turn (X)</div>
-  <div id="board"></div>
+
+  <div id="board-wrap">
+    <div id="board"></div>
+  </div>
 
   <div class="buttons">
     <button id="reset">New Game</button>
@@ -163,13 +179,6 @@
     var score = stored || { X: 0, O: 0, D: 0 };
     updateScore();
 
-    var boardSize = Math.min(window.innerWidth - 32, 360);
-    var cellSize = Math.floor((boardSize - 16) / 3);
-    var fontSize = Math.floor(cellSize * 0.5);
-
-    boardEl.style.width = boardSize + 'px';
-    boardEl.style.height = boardSize + 'px';
-
     function init() {
       board = ['','','','','','','','',''];
       current = 'X';
@@ -180,9 +189,6 @@
       for (var i = 0; i < 9; i++) {
         var cell = document.createElement('div');
         cell.className = 'cell';
-        cell.style.width = cellSize + 'px';
-        cell.style.height = cellSize + 'px';
-        cell.style.fontSize = fontSize + 'px';
         cell.setAttribute('data-i', i);
         cell.addEventListener('click', handleClick);
         boardEl.appendChild(cell);
