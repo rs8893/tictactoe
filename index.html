@@ -14,20 +14,71 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 30px 16px;
+      padding: 24px 16px;
       min-height: 100vh;
     }
 
     h1 {
       font-size: 2rem;
-      margin-bottom: 12px;
+      margin-bottom: 20px;
       color: #e94560;
+    }
+
+    /* Scoreboard */
+    #scoreboard {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      width: 100%;
+      max-width: 360px;
+    }
+
+    .score-card {
+      flex: 1;
+      background: #16213e;
+      border-radius: 12px;
+      padding: 12px 8px;
+      text-align: center;
+    }
+
+    .score-card .label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      opacity: 0.7;
+      margin-bottom: 4px;
+    }
+
+    .score-card .name {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .score-card .number {
+      font-size: 2.2rem;
+      font-weight: bold;
+      line-height: 1;
+    }
+
+    .score-card.you .name,
+    .score-card.you .number { color: #e94560; }
+    .score-card.ai  .name,
+    .score-card.ai  .number { color: #a8dadc; }
+    .score-card.draws .number { color: #aaa; }
+
+    .score-divider {
+      font-size: 1.4rem;
+      color: #555;
+      flex-shrink: 0;
     }
 
     #status {
       font-size: 1.1rem;
       margin-bottom: 20px;
       color: #a8dadc;
+      min-height: 1.4em;
     }
 
     #board {
@@ -35,7 +86,6 @@
       grid-template-columns: repeat(3, 1fr);
       grid-template-rows: repeat(3, 1fr);
       gap: 8px;
-      /* width and height set by JS */
     }
 
     .cell {
@@ -46,56 +96,73 @@
       justify-content: center;
       font-weight: bold;
       cursor: pointer;
-      /* width, height, font-size set by JS */
+      transition: background 0.15s;
     }
 
+    .cell:hover:not(.x):not(.o) { background: #1e2d50; }
     .cell.x { color: #e94560; }
     .cell.o { color: #a8dadc; }
     .cell.win { background: #0f3460; }
 
-    #reset {
+    .buttons {
+      display: flex;
+      gap: 10px;
       margin-top: 24px;
-      padding: 12px 32px;
-      font-size: 1rem;
+    }
+
+    button {
+      padding: 12px 24px;
+      font-size: 0.95rem;
       border: none;
       border-radius: 8px;
-      background: #e94560;
-      color: white;
       cursor: pointer;
     }
 
-    #score {
-      display: flex;
-      gap: 2rem;
-      margin-top: 20px;
-      font-size: 1rem;
-    }
-
-    .score-item { text-align: center; }
-    .score-item span { display: block; font-size: 1.6rem; font-weight: bold; }
-    .score-item.xs span { color: #e94560; }
-    .score-item.os span { color: #a8dadc; }
-    .score-item.ds span { color: #aaa; }
+    #reset       { background: #e94560; color: white; }
+    #reset-score { background: #16213e; color: #aaa; border: 1px solid #333; }
   </style>
 </head>
 <body>
   <h1>Tic Tac Toe</h1>
+
+  <div id="scoreboard">
+    <div class="score-card you">
+      <div class="label">Wins</div>
+      <div class="name">You (X)</div>
+      <div class="number" id="x-wins">0</div>
+    </div>
+    <div class="score-divider">vs</div>
+    <div class="score-card draws">
+      <div class="label">&nbsp;</div>
+      <div class="name">Draws</div>
+      <div class="number" id="draws">0</div>
+    </div>
+    <div class="score-divider">vs</div>
+    <div class="score-card ai">
+      <div class="label">Wins</div>
+      <div class="name">AI (O)</div>
+      <div class="number" id="o-wins">0</div>
+    </div>
+  </div>
+
   <div id="status">Your turn (X)</div>
   <div id="board"></div>
-  <button id="reset">New Game</button>
-  <div id="score">
-    <div class="score-item xs">You (X) <span id="x-wins">0</span></div>
-    <div class="score-item ds">Draws <span id="draws">0</span></div>
-    <div class="score-item os">AI (O) <span id="o-wins">0</span></div>
+
+  <div class="buttons">
+    <button id="reset">New Game</button>
+    <button id="reset-score">Reset Scores</button>
   </div>
 
   <script>
     var WINS = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-    var board, current, over, aiThinking, score = { X: 0, O: 0, D: 0 };
+    var board, current, over, aiThinking;
     var boardEl = document.getElementById('board');
     var statusEl = document.getElementById('status');
 
-    // Size the board based on screen width
+    var stored = JSON.parse(localStorage.getItem('ttt-score') || 'null');
+    var score = stored || { X: 0, O: 0, D: 0 };
+    updateScore();
+
     var boardSize = Math.min(window.innerWidth - 32, 360);
     var cellSize = Math.floor((boardSize - 16) / 3);
     var fontSize = Math.floor(cellSize * 0.5);
@@ -133,9 +200,7 @@
       var i = parseInt(e.currentTarget.getAttribute('data-i'));
       if (over || board[i] || aiThinking || current !== 'X') return;
       placeMove(i, 'X');
-
       if (resolveState('X')) return;
-
       current = 'O';
       statusEl.textContent = 'AI is thinking...';
       aiThinking = true;
@@ -151,13 +216,11 @@
       statusEl.textContent = 'Your turn (X)';
     }
 
-    // Finds a winning/blocking move for the given player, or returns -1
     function findThreat(player) {
       for (var i = 0; i < WINS.length; i++) {
         var line = WINS[i];
-        var vals = [board[line[0]], board[line[1]], board[line[2]]];
         var empties = line.filter(function(idx) { return !board[idx]; });
-        var filled = vals.filter(function(v) { return v === player; });
+        var filled  = line.filter(function(idx) { return board[idx] === player; });
         if (filled.length === 2 && empties.length === 1) return empties[0];
       }
       return -1;
@@ -169,7 +232,6 @@
       return e;
     }
 
-    // Simple AI: win if possible, block if needed, otherwise pick randomly
     function pickMove() {
       var win = findThreat('O');
       if (win !== -1) return win;
@@ -179,7 +241,6 @@
       return empty[Math.floor(Math.random() * empty.length)];
     }
 
-    // Returns true if game ended after player's move
     function resolveState(player) {
       var win = checkWin(board);
       if (win) {
@@ -188,13 +249,13 @@
         }
         statusEl.textContent = player === 'X' ? 'You win!' : 'AI wins!';
         score[player]++;
-        updateScore();
+        saveAndUpdateScore();
         over = true;
         return true;
       } else if (board.join('').length === 9) {
         statusEl.textContent = "It's a draw!";
         score.D++;
-        updateScore();
+        saveAndUpdateScore();
         over = true;
         return true;
       }
@@ -209,13 +270,23 @@
       return null;
     }
 
+    function saveAndUpdateScore() {
+      localStorage.setItem('ttt-score', JSON.stringify(score));
+      updateScore();
+    }
+
     function updateScore() {
       document.getElementById('x-wins').textContent = score.X;
       document.getElementById('o-wins').textContent = score.O;
-      document.getElementById('draws').textContent = score.D;
+      document.getElementById('draws').textContent  = score.D;
     }
 
     document.getElementById('reset').addEventListener('click', init);
+    document.getElementById('reset-score').addEventListener('click', function() {
+      score = { X: 0, O: 0, D: 0 };
+      saveAndUpdateScore();
+    });
+
     init();
   </script>
 </body>
