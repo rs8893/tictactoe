@@ -18,6 +18,6 @@
 ## Project files
 - Always maintain a README.md with a play/use link, how it works, and tech notes
 
-## Python code
-- Always include docstrings on functions and classes to help team members debug
+## Code documentation
+- Always include docstrings/doc comments on functions and classes to help team members debug
 - Add inline comments for non-obvious logic
